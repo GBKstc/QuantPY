@@ -45,7 +45,7 @@ for (i, c) in enumerate(refCnts):
 ###模板处理结束
 
 #处理目标图片
-img_path = os.path.join(current_dir, 'images', 'cv9.png')  # 待检测图片路径
+img_path = os.path.join(current_dir, 'images', 'card.png')  # 待检测图片路径
 image= cv2.imread(img_path)  # 读取待检测图片  
 # 调整图片大小 300宽 
 image = cv2.resize(image, (300, int(image.shape[0] * 300 / image.shape[1])))  
@@ -84,45 +84,50 @@ for (i, c) in enumerate(cnts):
 # 将符合的轮廓从左到右排序
 locs = sorted(locs, key=lambda x:x[0])  # 按照x坐标排序
 
-# 遍历 locs 把矩形绘制在 cur_img 上
-for  (i,(gx, gy, gw, gh)) in enumerate(locs):
-  groupOutput = []
-  # 根据坐标提取每一个组
-  group = image_gray[gy - 5:gy + gh + 5, gx - 5:gx + gw + 5]
-  #预处理
-  group = cv2.threshold(group, 0, 255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+# 创建一个最终的图像副本
+final_image = image.copy()
+
+# 遍历 locs 把矩形绘制在图像上
+for (i,(gx, gy, gw, gh)) in enumerate(locs):
+    groupOutput = []
+    # 根据坐标提取每一个组
+    group = image_gray[gy - 5:gy + gh + 5, gx - 5:gx + gw + 5]
+    #预处理
+    group = cv2.threshold(group, 0, 255,cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 #  cv_show('group',group)
-  # 计算每一组的轮廓
-  digitCnts,hierarchy = cv2.findContours(group.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-  digitCnts = contours.sort_contours(digitCnts,method="left-to-right")[0]
-  # 计算每一组的每一个数值
-  for c in digitCnts:
-    # 找到当前数值的轮廓，resize成合适的的大小
-    (x, y, w, h) = cv2.boundingRect(c)
-    roi = group[y:y + h, x:x + w]
-    roi = cv2.resize(roi, (57, 88))
-    # cv_show('roi',roi)
-    # 计算匹配得分
-    scores = []
-    # 在模板中计算每一个得分
-    for (digit, digitROI) in digits.items():
-        # 模板匹配
-        result = cv2.matchTemplate(roi, digitROI,cv2.TM_CCOEFF)
-        (_, score, _, _) = cv2.minMaxLoc(result)
-        scores.append(score)
-    # 得到最合适的数字
-    groupOutput.append(str(np.argmax(scores)))
-    print(groupOutput)
-    
-  #画出来
-  image_copy = image.copy()
-  cv2.rectangle(image_copy,(gx - 5, gy - 5),(gx + gw + 5, gy + gh + 5),(0, 0, 255), 1)
-  cv2.putText(image,''.join(groupOutput), (gx, gy - 15),cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
-  print(''.join(groupOutput))
+    # 计算每一组的轮廓
+    digitCnts,hierarchy = cv2.findContours(group.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+    digitCnts = contours.sort_contours(digitCnts,method="left-to-right")[0]
+    # 计算每一组的每一个数值
+    for c in digitCnts:
+        # 找到当前数值的轮廓，resize成合适的的大小
+        (x, y, w, h) = cv2.boundingRect(c)
+        roi = group[y:y + h, x:x + w]
+        roi = cv2.resize(roi, (57, 88))
+        # cv_show('roi',roi)
+        # 计算匹配得分
+        scores = []
+        # 在模板中计算每一个得分
+        for (digit, digitROI) in digits.items():
+            # 模板匹配
+            result = cv2.matchTemplate(roi, digitROI,cv2.TM_CCOEFF)
+            (_, score, _, _) = cv2.minMaxLoc(result)
+            scores.append(score)
+        # 得到最合适的数字
+        groupOutput.append(str(np.argmax(scores)))
+        print(groupOutput)
+        
+    #画出来
+    # 在最终图像上绘制
+    cv2.rectangle(final_image, (gx - 5, gy - 5), (gx + gw + 5, gy + gh + 5), (0, 0, 255), 1)
+    cv2.putText(final_image, ''.join(groupOutput), (gx, gy - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
 
-  # 显示结果
-  cv_show('image',image_copy)
-
+# 显示最终结果
+# cv_show('Final Result', final_image)
+# 把这张图片存下来
+final_image_path = os.path.join(current_dir, 'images', 'final_image.png')
+print(final_image_path)
+cv2.imwrite(final_image_path,final_image)
 
 
 
