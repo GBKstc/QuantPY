@@ -78,7 +78,7 @@ for(i,(gx,gy,gw,gh)) in enumerate(locs):
         roi = cv2.resize(roi, (57, 88))
         scores = []
         for (digit, digitROI) in digits.items():
-            result = cv2.matchTemplate(roi, digitROI, cv2.TM_CCOEFF)
+            result = cv2.matchTemplate(roi, digitROI, cv2.TM_CCOEFF)          
             (_, score, _, _) = cv2.minMaxLoc(result)
             scores.append(score)
         # 得到最合适的数字
@@ -88,5 +88,5 @@ for(i,(gx,gy,gw,gh)) in enumerate(locs):
     # 在最终图像上绘制
     cv2.rectangle(final_image, (gx - 5, gy - 5), (gx + gw + 5, gy + gh + 5), (0, 0, 255), 1)
     cv2.putText(final_image, ''.join(groupOutput), (gx, gy - 15), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
-
+     
 cv_show('final_image',final_image)
